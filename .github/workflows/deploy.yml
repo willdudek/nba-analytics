@@ -7,6 +7,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,6 +19,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: dashboard/package-lock.json
 
       - name: Install dependencies
         run: npm install
@@ -31,7 +35,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'build/nba-analytics'
+          path: 'dashboard/build/nba-analytics'
 
   deploy:
     needs: build
