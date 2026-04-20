@@ -1,1 +1,1 @@
-SELECT * FROM dive_3_dawg_energy
+SELECT * FROM mart_dawg_energy

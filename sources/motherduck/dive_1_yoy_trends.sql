@@ -1,1 +1,1 @@
-SELECT * FROM dive_1_yoy_trends
+SELECT * FROM mart_scoring_trends

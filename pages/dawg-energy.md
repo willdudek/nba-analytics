@@ -8,7 +8,7 @@ Hustle metric for guards (PG/SG) across three seasons — combining offensive re
 
 ```sql dawg
 select
-  Player,
+  player_name,
   season,
   dawg_index,
   orb,
@@ -20,21 +20,21 @@ order by dawg_index desc
 
 ```sql dawg_top10
 select
-  Player,
+  player_name,
   season,
   dawg_index
 from motherduck.dive_3_dawg_energy
-where Player in (
-  select Player from motherduck.dive_3_dawg_energy
+where player_name in (
+  select player_name from motherduck.dive_3_dawg_energy
   order by dawg_index desc
   limit 10
 )
-order by Player, season
+order by player_name, season
 ```
 
 <BarChart
   data={dawg_top10}
-  x=Player
+  x=player_name
   y=dawg_index
   series=season
   title="Top 10 Dawg Energy — Guards by Season"
@@ -42,7 +42,7 @@ order by Player, season
 />
 
 <DataTable data={dawg} search=true rows=20>
-  <Column id="Player" />
+  <Column id="player_name" title="Player"/>
   <Column id="season" />
   <Column id="dawg_index" fmt="num2" title="Dawg Index"/>
   <Column id="orb" fmt="num2" title="ORB"/>
