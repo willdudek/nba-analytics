@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: stg_nba_player_stats
+    description: "Cleaned and deduplicated player stats from Basketball Reference. One row per player per season."
+    columns:
+      - name: player_name
+        description: "Player full name"
+        tests:
+          - not_null
+      - name: season
+        description: "NBA season (e.g. 2022-23)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['2022-23', '2023-24', '2024-25']
+      - name: games_played
+        description: "Games played in the season"
+        tests:
+          - not_null
+      - name: points_per_game
+        description: "Points per game average"
+        tests:
+          - not_null

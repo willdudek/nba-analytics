@@ -1,10 +1,18 @@
-.evidence/template
-.svelte-kit
-build
-node_modules
-.DS_Store
-static/data
-*.options.yaml
-.vscode/settings.json
-.env
-.evidence/meta
+# Python virtual environment
+dbt-env/
+
+# Personal notes
+notes.txt
+
+# dbt
+nba_dbt/target/
+nba_dbt/dbt_packages/
+nba_dbt/logs/
+
+# Evidence
+dashboard/node_modules/
+dashboard/.evidence/
+dashboard/build/
+
+# Credentials
+**/*.options.yaml

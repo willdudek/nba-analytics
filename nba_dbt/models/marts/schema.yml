@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: mart_scoring_trends
+    description: "Year-over-year scoring and efficiency trends. One row per player per season, minimum 20 games played."
+    columns:
+      - name: player_name
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: ppg
+        tests:
+          - not_null
+
+  - name: mart_three_point_shooting
+    description: "Three point shooting efficiency and volume. Filters to players averaging 3+ attempts per game, minimum 20 games."
+    columns:
+      - name: player_name
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: three_point_pct
+        tests:
+          - not_null
+
+  - name: mart_dawg_energy
+    description: "Guard hustle index combining offensive rebounds, steals, and blocks per game. Guards only (PG/SG), minimum 20 games."
+    columns:
+      - name: player_name
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: dawg_index
+        tests:
+          - not_null

@@ -1,48 +1,50 @@
-# Evidence Template Project
+# NBA Analytics — MotherDuck + Claude
 
-## Using Codespaces
+Exploratory NBA player analytics built with DuckDB/MotherDuck as the query layer and Claude Desktop (via MCP) for analysis and visualization. Data covers three seasons: 2022-23, 2023-24, 2024-25.
 
-If you are using this template in Codespaces, click the `Start Evidence` button in the bottom status bar. This will install dependencies and open a preview of your project in your browser - you should get a popup prompting you to open in browser.
+## Stack
 
-Or you can use the following commands to get started:
+- **Data**: Basketball Reference (3 seasons of player stats)
+- **Database**: [MotherDuck](https://motherduck.com) (cloud DuckDB)
+- **Queries**: DuckDB SQL
+- **AI layer**: Claude Desktop connected to MotherDuck via MCP
+
+## Data
+
+Raw data lives in MotherDuck (`my_db`):
+
+| Table | Description |
+|-------|-------------|
+| `nba_2023` | 2022-23 season player stats |
+| `nba_2024` | 2023-24 season player stats |
+| `nba_2025` | 2024-25 season player stats |
+| `nba_player_stats` | Combined table with a `season` column |
+
+**Note on deduplication**: Basketball Reference includes a separate row per team for traded players. All queries use `ROW_NUMBER() OVER (PARTITION BY Player, season ORDER BY G DESC)` to keep only the row with the most games played.
+
+## Analyses
+
+### Dive 1 — Year-over-Year Player Trends
+[`sql/dive_1_yoy_trends.sql`](sql/dive_1_yoy_trends.sql) · [Live Dive](https://app.motherduck.com/dives/18cf253d-6489-4756-9781-9857eeca55a3)
+
+PPG, eFG%, and assists for players who appeared in all 3 seasons, displayed side by side with a 3-year PPG change column. Interactive version includes position filter and biggest risers/fallers tab.
+
+### Dive 2 — 3-Point % Year Over Year
+[`sql/dive_2_3pt_yoy.sql`](sql/dive_2_3pt_yoy.sql) · [Live Dive](https://app.motherduck.com/dives/5cae9f62-9e9e-4758-be55-58e9743b143a)
+
+3P% trend across all 3 seasons for the top 10 shooters in 2024-25 (min. 20 GP, 15 MPG, 3 attempts/game). Interactive version shows one line per player with hover to surface per-season attempt counts.
+
+### Dive 3 — Shooting Profile by Position
+[`sql/dive_3_shooting_profile.sql`](sql/dive_3_shooting_profile.sql) · [Live Dive](https://app.motherduck.com/dives/a842b4b2-2433-42c3-8f43-121b8cbf3611)
+
+3-point attempt rate vs 3P% efficiency by position and season. Surfaces catch-and-shoot specialists, volume shooters, and positional trends. Interactive version is filtered to PG/SG and includes a hustle index (ORB + STL + BLK) YoY tab.
+
+## Running the Queries
+
+Connect to MotherDuck and run any `.sql` file directly:
 
 ```bash
-npm install
-npm run sources
-npm run dev -- --host 0.0.0.0
+duckdb "md:" < sql/dive_1_yoy_trends.sql
 ```
 
-See [the CLI docs](https://docs.evidence.dev/cli/) for more command information.
-
-**Note:** Codespaces is much faster on the Desktop app. After the Codespace has booted, select the hamburger menu → Open in VS Code Desktop.
-
-## Get Started from VS Code
-
-The easiest way to get started is using the [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=Evidence.evidence-vscode):
-
-
-
-1. Install the extension from the VS Code Marketplace
-2. Open the Command Palette (Ctrl/Cmd + Shift + P) and enter `Evidence: New Evidence Project`
-3. Click `Start Evidence` in the bottom status bar
-
-## Get Started using the CLI
-
-```bash
-npx degit evidence-dev/template my-project
-cd my-project 
-npm install 
-npm run sources
-npm run dev 
-```
-
-Check out the docs for [alternative install methods](https://docs.evidence.dev/getting-started/install-evidence) including Docker, Github Codespaces, and alongside dbt.
-
-
-
-## Learning More
-
-- [Docs](https://docs.evidence.dev/)
-- [Github](https://github.com/evidence-dev/evidence)
-- [Slack Community](https://slack.evidence.dev/)
-- [Evidence Home Page](https://www.evidence.dev)
+Or open in Claude Desktop with MotherDuck MCP connected and paste the query.
