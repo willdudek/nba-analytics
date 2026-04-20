@@ -1,0 +1,31 @@
+[0m13:20:18.627391 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe01209e850>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe0111647f0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe0111649d0>]}
+
+
+============================== 13:20:18.631009 | 8a158ec9-9525-4d4a-835c-050589f93a16 ==============================
+[0m13:20:18.631009 [info ] [MainThread]: Running with dbt=1.10.20
+[0m13:20:18.631508 [debug] [MainThread]: running dbt with arguments {'indirect_selection': 'eager', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'cache_selected_only': 'False', 'printer_width': '80', 'debug': 'False', 'write_json': 'True', 'invocation_command': 'dbt init nba_dbt', 'target_path': 'None', 'quiet': 'False', 'static_parser': 'True', 'use_colors': 'True', 'empty': 'None', 'warn_error': 'None', 'partial_parse': 'True', 'version_check': 'True', 'fail_fast': 'False', 'use_experimental_parser': 'False', 'log_path': 'logs', 'log_format': 'default', 'introspect': 'True', 'profiles_dir': '/Users/willdudek/.dbt', 'no_print': 'None', 'log_cache_events': 'False', 'send_anonymous_usage_stats': 'True'}
+[0m13:20:18.639253 [info ] [MainThread]: Creating dbt configuration folder at /Users/willdudek/.dbt
+[0m13:20:18.640365 [debug] [MainThread]: Starter project path: /Users/willdudek/Documents/nba-analytics/dbt-env/lib/python3.9/site-packages/dbt/include/starter_project
+[0m13:20:18.644862 [info ] [MainThread]: 
+Your new dbt project "nba_dbt" was created!
+
+For more information on how to configure the profiles.yml file,
+please consult the dbt documentation here:
+
+  https://docs.getdbt.com/docs/configure-your-profile
+
+One more thing:
+
+Need help? Don't hesitate to reach out to us via GitHub issues or on Slack:
+
+  https://community.getdbt.com/
+
+Happy modeling!
+
+[0m13:20:18.645196 [info ] [MainThread]: Setting up your profile.
+[0m13:20:41.097418 [info ] [MainThread]: Profile nba_dbt written to /Users/willdudek/.dbt/profiles.yml using target's sample configuration. Once updated, you'll be able to start developing with dbt.
+[0m13:20:41.111864 [debug] [MainThread]: Resource report: {"command_name": "init", "command_success": true, "command_wall_clock_time": 22.560133, "process_in_blocks": "0", "process_kernel_time": 0.12583, "process_mem_max_rss": "113332224", "process_out_blocks": "0", "process_user_time": 1.023039}
+[0m13:20:41.112394 [debug] [MainThread]: Command `dbt init` succeeded at 13:20:41.112188 after 22.56 seconds
+[0m13:20:41.112746 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe01209e850>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe011145ca0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7fe0111452b0>]}
+[0m13:20:41.113084 [debug] [MainThread]: Flushing usage events
+[0m13:20:42.045335 [debug] [MainThread]: An error was encountered while trying to flush usage events
