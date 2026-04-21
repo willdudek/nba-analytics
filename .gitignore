@@ -16,3 +16,4 @@ dashboard/build/
 
 # Credentials
 **/*.options.yaml
+*.csv
