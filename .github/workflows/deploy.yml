@@ -32,6 +32,32 @@ jobs:
           npm run sources
           npm run build
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+        working-directory: .
+
+      - name: Install dbt
+        run: pip install dbt-duckdb
+        working-directory: .
+
+      - name: Generate dbt docs
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.EVIDENCE_SOURCE__MOTHERDUCK__TOKEN }}
+        run: |
+          cd ../nba_dbt
+          dbt docs generate
+        working-directory: .
+
+      - name: Copy dbt docs to build output
+        run: |
+          mkdir -p dashboard/build/nba-analytics/docs
+          cp nba_dbt/target/index.html dashboard/build/nba-analytics/docs/
+          cp nba_dbt/target/manifest.json dashboard/build/nba-analytics/docs/
+          cp nba_dbt/target/catalog.json dashboard/build/nba-analytics/docs/
+        working-directory: .
+
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
