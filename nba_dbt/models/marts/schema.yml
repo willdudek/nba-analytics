@@ -2,40 +2,255 @@ version: 2
 
 models:
   - name: mart_scoring_trends
-    description: "Year-over-year scoring and efficiency trends. One row per player per season, minimum 20 games played."
+    description: >
+      Season-level scoring and efficiency trends per player. One row per player per season.
+      Minimum 20 games played filter applied to exclude partial seasons and call-ups.
+      Intended for year-over-year comparisons of scoring output and shooting efficiency.
+      Source: stg_nba_player_stats. For within-season trends, use mart_season_game_trends.
     columns:
       - name: player_name
+        description: "Player full name."
         tests:
           - not_null
       - name: season
+        description: "NBA season in YYYY-YY format."
         tests:
           - not_null
+      - name: team
+        description: "Team abbreviation for the season."
+      - name: position
+        description: "Primary position (PG, SG, SF, PF, C)."
+      - name: games_played
+        description: "Games played. Minimum 20 required to appear in this mart."
       - name: ppg
+        description: "Points per game average for the season."
         tests:
           - not_null
+      - name: efg_pct
+        description: >
+          Effective field goal percentage. Preferred efficiency metric in this mart.
+          Formula: (FGM + 0.5 * 3PM) / FGA. Accounts for the added value of three-pointers.
+      - name: ts_pct
+        description: >
+          True shooting percentage. Most complete efficiency measure, incorporating
+          field goals, threes, and free throws. Formula: PTS / (2 * (FGA + 0.44 * FTA)).
+      - name: assists_per_game
+        description: "Average assists per game for the season."
 
   - name: mart_three_point_shooting
-    description: "Three point shooting efficiency and volume. Filters to players averaging 3+ attempts per game, minimum 20 games."
+    description: >
+      Three-point shooting efficiency and volume trends per player per season.
+      Filters to players averaging 3+ three-point attempts per game and a minimum of 20 games played.
+      Intended for identifying high-volume three-point shooters and tracking efficiency trends
+      year-over-year. Source: stg_nba_player_stats.
     columns:
       - name: player_name
+        description: "Player full name."
         tests:
           - not_null
       - name: season
+        description: "NBA season in YYYY-YY format."
         tests:
           - not_null
+      - name: team
+        description: "Team abbreviation for the season."
+      - name: games_played
+        description: "Games played. Minimum 20 required to appear in this mart."
+      - name: three_point_attempts_per_game
+        description: "Average three-point attempts per game. Minimum 3.0 required to appear in this mart."
       - name: three_point_pct
+        description: "Three-point field goal percentage for the season."
         tests:
           - not_null
+      - name: total_three_point_attempts
+        description: "Total three-point attempts across all games in the season (attempts_per_game * games_played)."
 
   - name: mart_dawg_energy
-    description: "Guard hustle index combining offensive rebounds, steals, and blocks per game. Guards only (PG/SG), minimum 20 games."
+    description: >
+      Guard hustle index measuring combined defensive and offensive activity.
+      Dawg index is defined as: offensive rebounds per game + steals per game + blocks per game.
+      Filtered to guards only (position IN ('PG', 'SG')) with a minimum of 20 games played.
+      Intended to surface guards who contribute beyond scoring — the 'glue guy' archetype.
+      Source: stg_nba_player_stats. For game-level dawg index, see fct_player_game_logs.
     columns:
       - name: player_name
+        description: "Player full name."
         tests:
           - not_null
       - name: season
+        description: "NBA season in YYYY-YY format."
         tests:
           - not_null
+      - name: team
+        description: "Team abbreviation for the season."
+      - name: position
+        description: "Guard position — PG or SG only in this mart."
+      - name: games_played
+        description: "Games played. Minimum 20 required to appear in this mart."
       - name: dawg_index
+        description: >
+          Composite hustle metric for guards. Formula: offensive_rebounds_per_game +
+          steals_per_game + blocks_per_game. Higher values indicate greater all-around
+          defensive and hustle contribution. Not a weighted index — each component
+          contributes equally. Defined consistently across season-level and game-level models.
         tests:
           - not_null
+      - name: offensive_rebounds_per_game
+        description: "Offensive rebounds per game component of dawg index."
+      - name: steals_per_game
+        description: "Steals per game component of dawg index."
+      - name: blocks_per_game
+        description: "Blocks per game component of dawg index."
+
+  - name: fct_player_game_logs
+    description: >
+      Game-level fact table. One row per player per game. Source: NBA Stats API via pull_game_logs.py.
+      Filters to games where minutes > 0 (DNPs excluded). This is the most granular table in the
+      project — use it for within-season trends, opponent analysis, and hot/cold streak analysis.
+      For season-level questions and advanced metrics (eFG%, TS%), use stg_nba_player_stats or
+      the season-level marts — deriving those from game logs adds complexity without benefit.
+    columns:
+      - name: player_id
+        description: "NBA Stats API player identifier."
+      - name: player_name
+        description: "Player full name."
+      - name: team
+        description: "Team abbreviation."
+      - name: team_name
+        description: "Full team name."
+      - name: game_id
+        description: "NBA Stats API unique game identifier."
+      - name: game_date
+        description: "Date the game was played."
+      - name: season
+        description: "NBA season in YYYY-YY format."
+      - name: home_away
+        description: "Whether the player's team was home or away. Values: 'Home' or 'Away'."
+      - name: opponent
+        description: "Opponent team abbreviation."
+      - name: win_loss
+        description: "Game result from the player's team perspective. Values: 'W' or 'L'."
+      - name: minutes
+        description: "Minutes played. Rows where minutes = 0 are excluded (DNPs filtered in model)."
+      - name: points
+        description: "Points scored in the game."
+      - name: assists
+        description: "Assists in the game."
+      - name: rebounds
+        description: "Total rebounds in the game."
+      - name: off_rebounds
+        description: "Offensive rebounds in the game."
+      - name: steals
+        description: "Steals in the game."
+      - name: blocks
+        description: "Blocks in the game."
+      - name: turnovers
+        description: "Turnovers in the game."
+      - name: fg_makes
+        description: "Field goals made."
+      - name: fg_attempts
+        description: "Field goals attempted."
+      - name: fg_pct
+        description: "Field goal percentage for the game."
+      - name: three_makes
+        description: "Three-point field goals made."
+      - name: three_attempts
+        description: "Three-point field goals attempted."
+      - name: three_pct
+        description: "Three-point percentage for the game."
+      - name: ft_makes
+        description: "Free throws made."
+      - name: ft_attempts
+        description: "Free throws attempted."
+      - name: ft_pct
+        description: "Free throw percentage for the game."
+      - name: plus_minus
+        description: "Plus/minus for the game — point differential while the player was on the court."
+      - name: double_double
+        description: "Boolean flag. True if player recorded 10+ in two of: points, rebounds, assists."
+      - name: triple_double
+        description: "Boolean flag. True if player recorded 10+ in three of: points, rebounds, assists."
+      - name: dawg_index
+        description: >
+          Game-level hustle metric. Formula: off_rebounds + steals + blocks for the game.
+          Consistent with the season-level dawg_index definition in mart_dawg_energy,
+          but calculated per game rather than averaged across a season.
+
+  - name: mart_player_vs_opponent
+    description: >
+      Aggregated player performance split by opponent. One row per player-opponent-season combination.
+      Minimum 2 games against an opponent required to appear. Useful for identifying matchup
+      tendencies — players who consistently perform well or poorly against specific teams.
+      Source: fct_player_game_logs.
+    columns:
+      - name: player_name
+        description: "Player full name."
+      - name: team
+        description: "Player's team abbreviation."
+      - name: opponent
+        description: "Opponent team abbreviation."
+      - name: season
+        description: "NBA season in YYYY-YY format."
+      - name: games
+        description: "Number of games played against this opponent. Minimum 2 to appear in this mart."
+      - name: avg_minutes
+        description: "Average minutes per game against this opponent."
+      - name: avg_points
+        description: "Average points per game against this opponent."
+      - name: avg_assists
+        description: "Average assists per game against this opponent."
+      - name: avg_rebounds
+        description: "Average rebounds per game against this opponent."
+      - name: avg_steals
+        description: "Average steals per game against this opponent."
+      - name: avg_blocks
+        description: "Average blocks per game against this opponent."
+      - name: avg_three_pct
+        description: "Average three-point percentage against this opponent."
+      - name: avg_plus_minus
+        description: "Average plus/minus per game against this opponent."
+      - name: avg_dawg_index
+        description: >
+          Average game-level dawg index against this opponent.
+          Formula: avg(off_rebounds + steals + blocks) per game.
+      - name: wins
+        description: "Number of wins in games against this opponent."
+      - name: losses
+        description: "Number of losses in games against this opponent."
+
+  - name: mart_season_game_trends
+    description: >
+      Monthly performance trends per player within a season. One row per player-team-season-month.
+      Minimum 3 games in a month required to appear — filters out injury-shortened months.
+      Intended for within-season analysis: hot streaks, cold stretches, load management patterns.
+      Month is stored as a date (first of month) for sorting; display formatting handled downstream.
+      Source: fct_player_game_logs.
+    columns:
+      - name: player_name
+        description: "Player full name."
+      - name: team
+        description: "Team abbreviation."
+      - name: season
+        description: "NBA season in YYYY-YY format."
+      - name: month
+        description: "Calendar month label (e.g. 'Oct 2024'). For sorting, use month_date."
+      - name: month_date
+        description: "First day of the month as a date. Use this column for chronological sorting."
+      - name: games
+        description: "Games played in the month. Minimum 3 required to appear in this mart."
+      - name: avg_minutes
+        description: "Average minutes per game in the month."
+      - name: avg_points
+        description: "Average points per game in the month."
+      - name: avg_assists
+        description: "Average assists per game in the month."
+      - name: avg_rebounds
+        description: "Average rebounds per game in the month."
+      - name: avg_dawg_index
+        description: "Average game-level dawg index in the month. Formula: avg(off_rebounds + steals + blocks)."
+      - name: avg_fg_pct
+        description: "Average field goal percentage in the month."
+      - name: avg_three_pct
+        description: "Average three-point percentage in the month."
+      - name: avg_plus_minus
+        description: "Average plus/minus per game in the month."

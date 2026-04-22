@@ -2,23 +2,141 @@ version: 2
 
 models:
   - name: stg_nba_player_stats
-    description: "Cleaned and deduplicated player stats from Basketball Reference. One row per player per season."
+    description: >
+      Cleaned and deduplicated season-level player stats sourced from Basketball Reference CSVs.
+      One row per player per season. Players who appeared on multiple teams are deduplicated by
+      keeping the row with the most games played (team-level rows are dropped, not the TOT aggregate).
+      Excludes 'League Average' rows. Use this model as the foundation for all season-level analysis.
+      Not intended for within-season or game-level questions — use fct_player_game_logs for those.
     columns:
       - name: player_name
-        description: "Player full name"
+        description: "Player full name as it appears in Basketball Reference."
         tests:
           - not_null
       - name: season
-        description: "NBA season (e.g. 2022-23)"
+        description: "NBA season in YYYY-YY format (e.g. 2022-23, 2023-24, 2024-25, 2025-26)."
         tests:
           - not_null
           - accepted_values:
-              values: ['2022-23', '2023-24', '2024-25','2025-26']
+              arguments:
+                values: ['2022-23', '2023-24', '2024-25', '2025-26']
+      - name: team
+        description: "Team abbreviation for the team the player spent the most games with. TOT rows are excluded."
+      - name: position
+        description: "Primary position as listed in Basketball Reference (e.g. PG, SG, SF, PF, C)."
+      - name: age
+        description: "Player age as of the season."
       - name: games_played
-        description: "Games played in the season"
+        description: "Total games played in the season."
         tests:
           - not_null
+      - name: games_started
+        description: "Total games started in the season."
+      - name: minutes_per_game
+        description: "Average minutes played per game."
       - name: points_per_game
-        description: "Points per game average"
+        description: "Average points scored per game."
         tests:
           - not_null
+      - name: assists_per_game
+        description: "Average assists per game."
+      - name: total_rebounds_per_game
+        description: "Average total rebounds (offensive + defensive) per game."
+      - name: offensive_rebounds_per_game
+        description: "Average offensive rebounds per game."
+      - name: steals_per_game
+        description: "Average steals per game."
+      - name: blocks_per_game
+        description: "Average blocks per game."
+      - name: turnovers_per_game
+        description: "Average turnovers per game."
+      - name: fg_pct
+        description: "Field goal percentage (FGM / FGA)."
+      - name: three_point_pct
+        description: "Three-point field goal percentage (3PM / 3PA)."
+      - name: three_point_attempts_per_game
+        description: "Average three-point attempts per game."
+      - name: ft_pct
+        description: "Free throw percentage (FTM / FTA)."
+      - name: efg_pct
+        description: >
+          Effective field goal percentage. Adjusts for the fact that three-point shots are worth
+          more than two-point shots. Formula: (FGM + 0.5 * 3PM) / FGA. Preferred over raw FG%
+          for evaluating shooting efficiency.
+      - name: ts_pct
+        description: >
+          True shooting percentage. Measures shipping efficiency accounting for field goals,
+          three-pointers, and free throws. Formula: PTS / (2 * (FGA + 0.44 * FTA)).
+          The most complete single measure of scoring efficiency available in this dataset.
+
+  - name: stg_nba_game_logs
+    description: >
+      Cleaned game-level player stats sourced from the NBA Stats API via pull_game_logs.py.
+      One row per player per game. Renames raw uppercase NBA Stats API column names to clean
+      lowercase equivalents. Derives home_away ('Home'/'Away') and opponent team abbreviation
+      from the matchup string (e.g. 'LAL vs. GSW' or 'LAL @ GSW'). No aggregation — this is
+      the raw game log cleaned for downstream use. DNP rows (minutes = 0) are filtered out
+      one layer up in fct_player_game_logs, not here.
+    columns:
+      - name: player_id
+        description: "NBA Stats API unique player identifier."
+      - name: player_name
+        description: "Player full name as returned by the NBA Stats API."
+      - name: team
+        description: "Player's team abbreviation for the game."
+      - name: team_name
+        description: "Player's full team name for the game."
+      - name: game_id
+        description: "NBA Stats API unique game identifier."
+      - name: game_date
+        description: "Date the game was played, cast to date type."
+      - name: season
+        description: "NBA season in YYYY-YY format."
+      - name: matchup
+        description: "Raw matchup string from NBA Stats API (e.g. 'LAL vs. GSW' for home, 'LAL @ GSW' for away)."
+      - name: home_away
+        description: "Derived from matchup string. 'Home' if matchup contains 'vs.', 'Away' if it contains '@'."
+      - name: opponent
+        description: "Opponent team abbreviation, derived by parsing the matchup string."
+      - name: win_loss
+        description: "Game result from the player's team perspective. Values: 'W' or 'L'."
+      - name: minutes
+        description: "Minutes played in the game."
+      - name: points
+        description: "Points scored in the game."
+      - name: assists
+        description: "Assists in the game."
+      - name: rebounds
+        description: "Total rebounds in the game."
+      - name: off_rebounds
+        description: "Offensive rebounds in the game."
+      - name: steals
+        description: "Steals in the game."
+      - name: blocks
+        description: "Blocks in the game."
+      - name: turnovers
+        description: "Turnovers in the game."
+      - name: fg_makes
+        description: "Field goals made."
+      - name: fg_attempts
+        description: "Field goals attempted."
+      - name: fg_pct
+        description: "Field goal percentage for the game."
+      - name: three_makes
+        description: "Three-point field goals made."
+      - name: three_attempts
+        description: "Three-point field goals attempted."
+      - name: three_pct
+        description: "Three-point percentage for the game."
+      - name: ft_makes
+        description: "Free throws made."
+      - name: ft_attempts
+        description: "Free throws attempted."
+      - name: ft_pct
+        description: "Free throw percentage for the game."
+      - name: plus_minus
+        description: "Plus/minus for the game — point differential while the player was on the court."
+      - name: double_double
+        description: "Boolean flag. True if player recorded 10+ in two of: points, rebounds, assists."
+      - name: triple_double
+        description: "Boolean flag. True if player recorded 10+ in three of: points, rebounds, assists."
