@@ -7,9 +7,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: dashboard
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,6 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: dashboard
 
       - name: Build
         env:
@@ -31,24 +29,22 @@ jobs:
         run: |
           npm run sources
           npm run build
+        working-directory: dashboard
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-        working-directory: .
 
       - name: Install dbt
         run: pip install dbt-duckdb
-        working-directory: .
 
       - name: Generate dbt docs
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.EVIDENCE_SOURCE__MOTHERDUCK__TOKEN }}
         run: |
-          cd ../nba_dbt
           dbt docs generate
-        working-directory: .
+        working-directory: nba_dbt
 
       - name: Copy dbt docs to build output
         run: |
@@ -56,7 +52,6 @@ jobs:
           cp nba_dbt/target/index.html dashboard/build/nba-analytics/docs/
           cp nba_dbt/target/manifest.json dashboard/build/nba-analytics/docs/
           cp nba_dbt/target/catalog.json dashboard/build/nba-analytics/docs/
-        working-directory: .
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
