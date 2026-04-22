@@ -43,7 +43,7 @@ jobs:
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.EVIDENCE_SOURCE__MOTHERDUCK__TOKEN }}
         run: |
-          dbt docs generate
+          dbt docs generate --profiles-dir .
         working-directory: nba_dbt
 
       - name: Copy dbt docs to build output
