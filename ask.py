@@ -57,7 +57,7 @@ Columns: player_name, team, season, month, month_date, games, avg_minutes, avg_p
 3. After results are returned, summarize the answer in plain English
 """
 
-ANTHROPIC_API_KEY = "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"
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 MOTHERDUCK_TOKEN = os.environ.get("MOTHERDUCK_TOKEN")
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
