@@ -30,12 +30,14 @@ models:
         description: >
           Effective field goal percentage. Preferred efficiency metric in this mart.
           Formula: (FGM + 0.5 * 3PM) / FGA. Accounts for the added value of three-pointers.
-      - name: ts_pct
-        description: >
-          True shooting percentage. Most complete efficiency measure, incorporating
-          field goals, threes, and free throws. Formula: PTS / (2 * (FGA + 0.44 * FTA)).
-      - name: assists_per_game
+      - name: apg
         description: "Average assists per game for the season."
+      - name: rpg
+        description: "Average rebounds per game for the season."
+      - name: ppg_delta
+        description: "Year-over-year change in points per game. Positive = scoring improvement vs prior season."
+      - name: efg_delta
+        description: "Year-over-year change in effective field goal percentage."
 
   - name: mart_three_point_shooting
     description: >
@@ -56,14 +58,16 @@ models:
         description: "Team abbreviation for the season."
       - name: games_played
         description: "Games played. Minimum 20 required to appear in this mart."
-      - name: three_point_attempts_per_game
-        description: "Average three-point attempts per game. Minimum 3.0 required to appear in this mart."
       - name: three_point_pct
         description: "Three-point field goal percentage for the season."
         tests:
           - not_null
-      - name: total_three_point_attempts
-        description: "Total three-point attempts across all games in the season (attempts_per_game * games_played)."
+      - name: three_pa_per_game
+        description: "Average three-point attempts per game. Minimum 3.0 required to appear in this mart."
+      - name: total_attempts
+        description: "Total three-point attempts across all games in the season."
+      - name: three_pct_delta
+        description: "Year-over-year change in three-point percentage. Positive = improved shooting vs prior season."
 
   - name: mart_dawg_energy
     description: >
@@ -83,24 +87,24 @@ models:
           - not_null
       - name: team
         description: "Team abbreviation for the season."
-      - name: position
-        description: "Guard position — PG or SG only in this mart."
       - name: games_played
         description: "Games played. Minimum 20 required to appear in this mart."
       - name: dawg_index
         description: >
-          Composite hustle metric for guards. Formula: offensive_rebounds_per_game +
-          steals_per_game + blocks_per_game. Higher values indicate greater all-around
-          defensive and hustle contribution. Not a weighted index — each component
-          contributes equally. Defined consistently across season-level and game-level models.
+          Composite hustle metric for guards. Formula: orb + stl + blk per game.
+          Higher values indicate greater all-around defensive and hustle contribution.
+          Not a weighted index — each component contributes equally.
+          Defined consistently across season-level and game-level models.
         tests:
           - not_null
-      - name: offensive_rebounds_per_game
-        description: "Offensive rebounds per game component of dawg index."
-      - name: steals_per_game
-        description: "Steals per game component of dawg index."
-      - name: blocks_per_game
-        description: "Blocks per game component of dawg index."
+      - name: orb
+        description: "Offensive rebounds per game. Component of dawg index."
+      - name: stl
+        description: "Steals per game. Component of dawg index."
+      - name: blk
+        description: "Blocks per game. Component of dawg index."
+      - name: dawg_delta
+        description: "Year-over-year change in dawg_index. Positive = improved hustle vs prior season."
 
   - name: fct_player_game_logs
     description: >
