@@ -13,7 +13,6 @@ Built with Evidence.dev + MotherDuck + dbt.
 ## Season Aggregate Dashboards
 
 - [Scoring Trends](/scoring-trends) — Year-over-year PPG and eFG% with delta indicators
-- [3-Point Shooting](/three-point-shooting) — Top shooters by efficiency and volume across seasons
 - [Dawg Energy Index](/dawg-energy) — Guard hustle metric tracking ORB, STL, and BLK
 
 ## Game-Level Dashboards
