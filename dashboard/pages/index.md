@@ -6,7 +6,7 @@ title: NBA Player Analytics
 
 Four seasons of NBA data (2022–23 through 2025–26), explored across scoring trends, shooting efficiency, hustle metrics, and game-level analysis.
 
-Built with Evidence.dev + MotherDuck + dbt.
+Built with dbt, MotherDuck, and Evidence as part of a larger exploration of modern data stack architecture and AI tooling — [see the full project on GitHub](https://github.com/willdudek/nba-analytics).
 
 ---
 
