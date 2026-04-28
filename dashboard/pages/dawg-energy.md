@@ -4,7 +4,11 @@ title: Dawg Energy Index
 
 # Dawg Energy Index
 
-Hustle metric for guards (PG/SG) across three seasons — combining offensive rebounds, steals, and blocks into a single index. High dawg energy = doing the dirty work.
+Hustle metric for guards combining offensive rebounds, steals, and blocks into a single index. High dawg energy = doing the dirty work.
+
+**How guards are defined:** Any player listed as a PG or SG in at least one season. All available seasons for those players are included — even seasons where they were listed at another position. This ensures players like Scottie Barnes and Josh Hart appear across their full career arc.
+
+**Dawg Index formula:** Offensive rebounds + steals + blocks per game.
 
 ```sql dawg
 select
@@ -14,7 +18,7 @@ select
   orb,
   stl,
   blk
-from motherduck.dive_3_dawg_energy
+from motherduck.mart_dawg_energy
 order by dawg_index desc
 ```
 
@@ -23,10 +27,12 @@ select
   player_name,
   season,
   dawg_index
-from motherduck.dive_3_dawg_energy
+from motherduck.mart_dawg_energy
 where player_name in (
-  select player_name from motherduck.dive_3_dawg_energy
-  order by dawg_index desc
+  select player_name
+  from motherduck.mart_dawg_energy
+  group by player_name
+  order by max(dawg_index) desc
   limit 10
 )
 order by player_name, season

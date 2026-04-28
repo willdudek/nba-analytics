@@ -76,6 +76,8 @@ order by player_name, season_month_order
   y=avg_points
   series=player_name
   title="Points Per Game by Month (Celtics Big Ballers Only)"
+  xMin=1
+  xMax=7
 />
 
 <LineChart
@@ -84,6 +86,8 @@ order by player_name, season_month_order
   y=avg_assists
   series=player_name
   title="Assists Per Game by Month (Celtics Big Ballers Only)"
+  xMin=1
+  xMax=7
 />
 
 <LineChart
@@ -92,6 +96,8 @@ order by player_name, season_month_order
   y=avg_rebounds
   series=player_name
   title="Rebounds Per Game by Month (Celtics Big Ballers Only)"
+  xMin=1
+  xMax=7
 />
 
 <LineChart
@@ -100,6 +106,8 @@ order by player_name, season_month_order
   y=avg_three_pct
   series=player_name
   title="3-Point % by Month (Celtics Big Ballers Only)"
+  xMin=1
+  xMax=7
   yFmt=pct1
 />
 

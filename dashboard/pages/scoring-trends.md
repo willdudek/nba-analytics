@@ -4,7 +4,7 @@ title: Year-over-Year Scoring Trends
 
 # Year-over-Year Scoring Trends
 
-Player performance across three seasons (2022-23 through 2024-25), tracking points per game, shooting efficiency, and year-over-year deltas.
+Player scoring performance across four seasons (2022-23 through 2025-26). PPG Δ and eFG% Δ show the change vs the prior season.
 
 ```sql trends
 select
