@@ -1,50 +1,89 @@
-# NBA Analytics — MotherDuck + Claude
+# NBA Analytics — Modern Data Stack Portfolio Project
 
-Exploratory NBA player analytics built with DuckDB/MotherDuck as the query layer and Claude Desktop (via MCP) for analysis and visualization. Data covers three seasons: 2022-23, 2023-24, 2024-25.
+A personal project built to explore modern data stack architecture and AI tooling hands-on — specifically how AI fits into each layer of a data platform, from development tooling to natural language querying. Uses NBA player data as the domain; the basketball framing is intentional but incidental.
+
+The real artifact is an end-to-end pipeline: raw sources → modeled, tested, documented data layer → live BI dashboard → natural language interface powered by the Claude API.
+
+**Live dashboard:** [willdudek.github.io/nba-analytics](https://willdudek.github.io/nba-analytics)
+
+---
 
 ## Stack
 
-- **Data**: Basketball Reference (3 seasons of player stats)
-- **Database**: [MotherDuck](https://motherduck.com) (cloud DuckDB)
-- **Queries**: DuckDB SQL
-- **AI layer**: Claude Desktop connected to MotherDuck via MCP
+| Layer | Tool | Notes |
+|-------|------|-------|
+| Data warehouse | MotherDuck (cloud DuckDB) | Serverless, fast, native MCP support |
+| Transformation | dbt Core | Version-controlled SQL, testing, documentation |
+| BI / dashboard | Evidence.dev | SQL-first, open source, deploys as static files |
+| AI interface | Claude API | Natural language querying over dbt-modeled data |
+| Development | Claude Desktop + MCP | Interactive data exploration and AI-assisted development |
+| CI/CD | GitHub Actions + GitHub Pages | Automated deployment on push to main |
 
-## Data
+---
 
-Raw data lives in MotherDuck (`my_db`):
+## Architecture
 
-| Table | Description |
-|-------|-------------|
-| `nba_2023` | 2022-23 season player stats |
-| `nba_2024` | 2023-24 season player stats |
-| `nba_2025` | 2024-25 season player stats |
-| `nba_player_stats` | Combined table with a `season` column |
-
-**Note on deduplication**: Basketball Reference includes a separate row per team for traded players. All queries use `ROW_NUMBER() OVER (PARTITION BY Player, season ORDER BY G DESC)` to keep only the row with the most games played.
-
-## Analyses
-
-### Dive 1 — Year-over-Year Player Trends
-[`sql/dive_1_yoy_trends.sql`](sql/dive_1_yoy_trends.sql) · [Live Dive](https://app.motherduck.com/dives/18cf253d-6489-4756-9781-9857eeca55a3)
-
-PPG, eFG%, and assists for players who appeared in all 3 seasons, displayed side by side with a 3-year PPG change column. Interactive version includes position filter and biggest risers/fallers tab.
-
-### Dive 2 — 3-Point % Year Over Year
-[`sql/dive_2_3pt_yoy.sql`](sql/dive_2_3pt_yoy.sql) · [Live Dive](https://app.motherduck.com/dives/5cae9f62-9e9e-4758-be55-58e9743b143a)
-
-3P% trend across all 3 seasons for the top 10 shooters in 2024-25 (min. 20 GP, 15 MPG, 3 attempts/game). Interactive version shows one line per player with hover to surface per-season attempt counts.
-
-### Dive 3 — Shooting Profile by Position
-[`sql/dive_3_shooting_profile.sql`](sql/dive_3_shooting_profile.sql) · [Live Dive](https://app.motherduck.com/dives/a842b4b2-2433-42c3-8f43-121b8cbf3611)
-
-3-point attempt rate vs 3P% efficiency by position and season. Surfaces catch-and-shoot specialists, volume shooters, and positional trends. Interactive version is filtered to PG/SG and includes a hustle index (ORB + STL + BLK) YoY tab.
-
-## Running the Queries
-
-Connect to MotherDuck and run any `.sql` file directly:
-
-```bash
-duckdb "md:" < sql/dive_1_yoy_trends.sql
+```
+Data Sources
+├── Basketball Reference CSVs (season-level stats, 2022-23 through 2025-26)
+└── NBA Stats API (game-level logs via pull_game_logs.py)
+        ↓
+MotherDuck (cloud DuckDB)
+    Raw tables: nba_player_stats, nba_game_logs
+        ↓
+dbt Core
+    Staging layer — cleaning, deduplication, standardization
+    ├── stg_nba_player_stats
+    └── stg_nba_game_logs
+        ↓
+    Mart layer — business logic, metric definitions
+    ├── mart_scoring_trends
+    ├── mart_three_point_shooting
+    ├── mart_dawg_energy
+    ├── fct_player_game_logs
+    ├── mart_player_vs_opponent
+    └── mart_season_game_trends
+        ↓
+Two consumers
+├── Evidence.dev dashboard → GitHub Pages
+└── Claude API natural language interface (ask.py)
 ```
 
-Or open in Claude Desktop with MotherDuck MCP connected and paste the query.
+---
+
+## Project Roadmap
+
+**Phase 1 — Foundation**
+Connected MotherDuck to Claude Desktop via MCP. Loaded raw data, explored interactively using natural language queries. First hands-on look at MCP as a connection layer between an AI and a live database.
+
+**Phase 2 — Evidence Dashboard**
+Built a live dashboard using Evidence.dev — SQL-first, open source, compiles to static files. Deployed via GitHub Actions to GitHub Pages with automated CI/CD. Hit the limits of Evidence dynamic filtering and cross-query interactivity, which informed the decision to build a proper AI interface in Phase 5.
+
+**Phase 3 — dbt Modeling**
+Replaced hand-written views with a proper dbt project. Staging → mart architecture, 14 passing data quality tests, caught and fixed real data issues. Established main/dev Git branching workflow. Before: logic in hand-written views, no tests, no reproducibility. After: version-controlled SQL, full lineage, clone and run.
+
+**Phase 4 — Data Expansion + Semantic Layer**
+Added 2025-26 season data and game-level data from the NBA Stats API. Built three new models including a grain-level fact table. Made a deliberate decision to implement documentation-as-semantic-layer over a formal semantic layer tool — the right call at this scale with technical consumers, but would revisit when non-technical users need to query directly or when multiple tools need metric definitions enforced consistently.
+
+**Phase 5 — Natural Language Interface**
+Built a Python script using the Claude API. Accepts a natural language question, generates SQL with dbt schema documentation as system prompt context, executes against MotherDuck, returns a plain English answer. Built and ran a 10-question eval set across easy/medium/hard tiers to validate accuracy and inform system prompt and semantic layer refinements.
+
+---
+
+## Key Decisions
+
+**dbt over hand-written views**
+Before dbt, transformation logic lived in hand-written MotherDuck views — no tests, no documentation, no reproducibility. dbt replaced that with version-controlled SQL, a staging → mart architecture, and data quality tests that caught real issues. The before/after is concrete: clone the repo, run dbt run, the entire data layer rebuilds from scratch.
+
+**Evidence over a traditional BI tool**
+Evidence is SQL-first and open source — every query is a version-controlled file, every dashboard deploys as static HTML. The tradeoff is limited dynamic filtering and no GUI for non-technical users. Worth it for a technical portfolio project where Git-native workflow and AI-assisted development matter more than point-and-click.
+
+**Documentation-as-semantic-layer**
+Rather than implementing a formal semantic layer tool, metric definitions, business rules, and architectural guidance live in dbt schema.yml files. Precise enough to serve as LLM context in Phase 5 — the same documentation that a human reads in the dbt docs site is what Claude reads before generating SQL. Sufficient at this scale; would revisit with non-technical users or multiple tools needing consistent metric enforcement.
+
+**Evaluation before shipping the AI interface**
+Built a 10-question eval set across easy, medium, and hard tiers before calling Phase 5 done. Caught real issues — column name drift between documentation and actual tables, query extraction logic — that would have affected production behavior. Same rigor as data pipeline testing applied to an AI system.
+
+---
+
+*Data sources: Basketball Reference (season aggregates), NBA Stats API (game logs)*
