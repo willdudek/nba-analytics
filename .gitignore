@@ -17,3 +17,6 @@ dashboard/build/
 # Credentials
 **/*.options.yaml
 *.csv
+
+.DS_Store
+logs/
