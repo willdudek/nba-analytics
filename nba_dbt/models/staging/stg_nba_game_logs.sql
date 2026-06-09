@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 with source as (
-    select * from my_db.main.nba_game_logs
+    select * from {{ source('nba', 'nba_game_logs') }}
 ),
 
 cleaned as (

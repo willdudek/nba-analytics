@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 with source as (
-    select * from my_db.main.nba_player_stats
+    select * from {{ source('nba', 'nba_player_stats') }}
     where Player != 'League Average'
 ),
 

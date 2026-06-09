@@ -1,5 +1,30 @@
 version: 2
 
+sources:
+  - name: nba
+    database: my_db
+    schema: main
+    tables:
+      - name: nba_player_stats
+        description: >
+          Raw season-level player stats loaded from Basketball Reference CSVs.
+          One row per player per team per season. Includes a TOT row for players
+          who appeared on multiple teams. Load via pull_season_stats.py (to be built).
+      - name: nba_game_logs
+        description: >
+          Raw game-level player stats loaded from the NBA Stats API via pull_game_logs.py.
+          One row per player per game. Covers seasons 2022-23 through 2025-26.
+      - name: nba_injuries
+        description: >
+          Raw NBA injury data pulled from official NBA injury reports via the nbainjuries
+          Python package (python3.11 pull_injuries.py). One row per player per game date
+          where the player has a reported injury status. Covers seasons 2022-23 through
+          2025-26. Status values: Out, Questionable, Available. Run pull_injuries.py once
+          to load — this is a one-time pull, not a recurring job.
+
+
+
+
 models:
   - name: stg_nba_player_stats
     description: >
