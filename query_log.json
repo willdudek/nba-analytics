@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": "2026-06-16T14:26:02.680106",
+    "question": "what was lebrons ppg in 2022-2023?",
+    "table_used": "mart_scoring_trends",
+    "sql": "SELECT player_name, team, season, games_played, ppg\nFROM my_db.main.mart_scoring_trends\nWHERE player_name ILIKE '%LeBron%'\nAND season = '2022-23'",
+    "answer": "LeBron James averaged **28.9 points per game** for the Los Angeles Lakers in the 2022-23 season across 55 games played. That was a remarkable scoring season, especially notable because it was the year he broke Kareem Abdul-Jabbar's all-time NBA scoring record.",
+    "error": null
+  },
+  {
+    "timestamp": "2026-06-16T14:26:17.708786",
+    "question": "how did that change in the next two seasons",
+    "table_used": "mart_scoring_trends",
+    "sql": "SELECT player_name, team, season, games_played, ppg, ppg_delta\nFROM my_db.main.mart_scoring_trends\nWHERE player_name ILIKE '%LeBron%'\nAND season IN ('2023-24', '2024-25')\nORDER BY season",
+    "answer": "After his big 2022-23 season, LeBron's scoring has gradually declined over the next two years:\n\n- **2023-24:** 25.7 PPG \u2014 a drop of **3.2 points** from the prior season, though he played significantly more games (71 vs. 55)\n- **2024-25:** 24.4 PPG \u2014 a further decline of **1.3 points**, playing a similar workload (70 games)\n\nSo over two seasons, LeBron's scoring dropped by a total of **4.5 PPG** from his 2022-23 peak of 28.9. That said, averaging 24+ points per game at his age is still an elite level of production, and he's actually been healthier and more available in these recent seasons.",
+    "error": null
+  }
+]

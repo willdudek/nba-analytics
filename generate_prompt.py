@@ -5,8 +5,6 @@ MANIFEST_PATH = "nba_dbt/target/manifest.json"
 CATALOG_PATH = "nba_dbt/target/catalog.json"
 OUTPUT_PATH = "system_prompt.txt"
 
-# Models to include in the system prompt — staging models excluded,
-# mart_monthly_player_averages excluded (redundant with mart_season_game_trends)
 MODELS_TO_INCLUDE = [
     "mart_scoring_trends",
     "mart_three_point_shooting",
@@ -19,7 +17,6 @@ MODELS_TO_INCLUDE = [
     "mart_player_injury_performance",
 ]
 
-# Routing rules — written once here, not auto-generated
 ROUTING_RULES = """## Table routing — which table to use for which question
 - Year-over-year scoring, efficiency (eFG%), assists, rebounds: use mart_scoring_trends
 - Three-point shooting volume and efficiency trends: use mart_three_point_shooting
@@ -32,6 +29,64 @@ ROUTING_RULES = """## Table routing — which table to use for which question
 - Player performance before and after returning from injury: use mart_player_injury_performance
 """
 
+# Few-shot examples — worked question/SQL pairs that show Claude correct behavior
+# Especially useful for cross-table questions and business rule edge cases
+FEW_SHOT_EXAMPLES = """## Examples
+
+### Example 1 — season-level scoring question
+Question: Who were the top 5 scorers in 2024-25?
+Table: mart_scoring_trends
+SQL:
+```sql
+SELECT player_name, team, ppg
+FROM my_db.main.mart_scoring_trends
+WHERE season = '2024-25'
+ORDER BY ppg DESC
+LIMIT 5
+```
+
+### Example 2 — guard hustle with year-over-year context
+Question: Which guards improved their dawg index the most this season?
+Table: mart_dawg_energy
+SQL:
+```sql
+SELECT player_name, team, season, dawg_index, dawg_delta
+FROM my_db.main.mart_dawg_energy
+WHERE season = '2024-25'
+AND dawg_delta IS NOT NULL
+ORDER BY dawg_delta DESC
+LIMIT 10
+```
+
+### Example 3 — cross-table injury + performance question
+Question: How did Joel Embiid perform after returning from injury last season?
+Table: mart_player_injury_performance
+SQL:
+```sql
+SELECT player_name, season, injury_start, injury_reason,
+       avg_points_before, avg_points_after, points_delta,
+       avg_minutes_before, avg_minutes_after,
+       games_before_count, games_after_count
+FROM my_db.main.mart_player_injury_performance
+WHERE player_name ILIKE '%Embiid%'
+AND season = '2024-25'
+ORDER BY injury_start
+```
+
+### Example 4 — opponent matchup question
+Question: How does LeBron James perform against the Warriors?
+Table: mart_player_vs_opponent
+SQL:
+```sql
+SELECT player_name, opponent, season, games,
+       avg_points, avg_assists, avg_rebounds, avg_plus_minus
+FROM my_db.main.mart_player_vs_opponent
+WHERE player_name ILIKE '%LeBron%'
+AND opponent = 'GSW'
+ORDER BY season DESC
+```
+"""
+
 def load_json(path):
     with open(path) as f:
         return json.load(f)
@@ -42,7 +97,6 @@ def build_prompt():
 
     lines = []
 
-    # Header
     lines.append("""You are a data assistant with access to an NBA analytics database built on MotherDuck (cloud DuckDB). You answer questions about NBA player performance by generating and executing SQL queries against a set of dbt-modeled tables.
 
 ## Core rules
@@ -52,6 +106,7 @@ def build_prompt():
 - Always specify the full table path: my_db.main.<table_name>
 - Seasons are formatted as YYYY-YY (e.g. '2024-25'). Available seasons: 2022-23, 2023-24, 2024-25, 2025-26.
 - You are in a multi-turn conversation. You have access to the full conversation history. Use prior questions and answers as context when interpreting follow-up questions.
+- Always generate exactly one SQL query. Do not write exploratory SQL before the real query.
 """)
 
     lines.append(ROUTING_RULES)
@@ -60,12 +115,10 @@ def build_prompt():
     for model_name in MODELS_TO_INCLUDE:
         node_key = f"model.nba_dbt.{model_name}"
 
-        # get description from manifest
         node = manifest.get("nodes", {}).get(node_key, {})
         model_description = node.get("description", "").strip()
         manifest_columns = node.get("columns", {})
 
-        # get column types from catalog
         catalog_node = catalog.get("nodes", {}).get(node_key, {})
         catalog_columns = catalog_node.get("columns", {})
 
@@ -73,7 +126,6 @@ def build_prompt():
         if model_description:
             lines.append(model_description)
 
-        # build column list combining types from catalog and descriptions from manifest
         col_lines = []
         for col_name, col_meta in catalog_columns.items():
             col_type = col_meta.get("type", "")
@@ -89,6 +141,8 @@ def build_prompt():
             lines.extend(col_lines)
 
         lines.append("")
+
+    lines.append(FEW_SHOT_EXAMPLES)
 
     lines.append("""## Response format
 1. State which table you're querying and why
