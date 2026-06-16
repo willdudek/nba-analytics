@@ -19,4 +19,5 @@ dashboard/build/
 *.csv
 
 .DS_Store
-logs/
+logs/system_prompt.txt
+query_log.json
