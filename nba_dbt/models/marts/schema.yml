@@ -258,3 +258,166 @@ models:
         description: "Average three-point percentage in the month."
       - name: avg_plus_minus
         description: "Average plus/minus per game in the month."
+  - name: mart_player_injury_history
+    description: >
+      Season-level injury summary per player. One row per player per team per season.
+      Only includes players who missed at least one game due to injury (games_missed > 0).
+      Games missed is calculated by joining injury reports against actual game dates —
+      only games where the team actually played count, eliminating false positives from
+      non-game-day reports. Non-injury statuses (rest, trade pending, personal reasons)
+      are excluded from injury_types. Use this model for questions about injury burden,
+      availability, and injury history by player or season.
+      Sources: stg_nba_injuries, fct_player_game_logs, team_name_map.
+    columns:
+      - name: player_name
+        description: "Player full name."
+      - name: team
+        description: "Team abbreviation for the season."
+      - name: season
+        description: "NBA season in YYYY-YY format."
+      - name: games_missed
+        description: "Games missed due to Out status, joined against actual game dates. Excludes non-game days."
+      - name: games_questionable
+        description: "Number of games where player was listed as Questionable."
+      - name: games_probable
+        description: "Number of games where player was listed as Probable."
+      - name: first_injury_date
+        description: "Earliest game date where player was listed as Out in the season."
+      - name: last_injury_date
+        description: "Most recent game date where player was listed as Out in the season."
+      - name: injury_types
+        description: >
+          Comma-separated list of distinct injury descriptions for the season.
+          Parsed from the raw injury_reason field. Non-injury entries (rest, trade pending,
+          coach decision, G League, two-way) are excluded. Values are uppercased and deduplicated.
+
+  - name: mart_team_injury_profile
+    description: >
+      Team-level injury availability snapshot per game date. One row per team per game date.
+      Shows how many players were Out, Doubtful, Questionable, or Probable on any given day,
+      plus player name lists for Out and Questionable players. Intended for matchup analysis —
+      understanding a team's injury situation heading into a specific game.
+      Use players_unavailable (Out + Doubtful) as the primary availability signal.
+      Sources: stg_nba_injuries, team_name_map.
+    columns:
+      - name: game_date
+        description: "Date of the injury report."
+      - name: season
+        description: "NBA season in YYYY-YY format."
+      - name: team
+        description: "Team abbreviation."
+      - name: players_out
+        description: "Number of players listed as Out on this date."
+      - name: players_doubtful
+        description: "Number of players listed as Doubtful on this date."
+      - name: players_questionable
+        description: "Number of players listed as Questionable on this date."
+      - name: players_probable
+        description: "Number of players listed as Probable on this date."
+      - name: players_out_names
+        description: "Comma-separated list of players listed as Out on this date."
+      - name: players_questionable_names
+        description: "Comma-separated list of players listed as Questionable on this date."
+      - name: players_unavailable
+        description: "Total players unavailable: Out + Doubtful. Primary availability signal for matchup analysis."
+
+  - name: mart_player_injury_performance
+    description: >
+      Before/after performance comparison for players returning from injury.
+      One row per player per injury spell (defined as a continuous Out period within a season).
+      Compares average stats across the 5 games before the injury started vs the 5 games
+      after the player returned. Requires at least 3 games before the injury to appear.
+      Only includes true injuries — filters to injury_reason LIKE 'Injury/Illness%',
+      excluding rest, personal reasons, and other non-injury absences.
+      Use this model for questions about player performance after returning from injury,
+      rust factors, or recovery patterns.
+      Sources: fct_player_game_logs, stg_nba_injuries, team_name_map.
+    columns:
+      - name: player_name
+        description: "Player full name."
+      - name: team
+        description: "Team abbreviation."
+      - name: season
+        description: "NBA season in YYYY-YY format."
+      - name: injury_start
+        description: "First game date the player was listed as Out for this injury spell."
+      - name: injury_reason
+        description: "Injury description from the official NBA injury report."
+      - name: avg_points_before
+        description: "Average points per game in the 5 games before the injury."
+      - name: avg_rebounds_before
+        description: "Average rebounds per game in the 5 games before the injury."
+      - name: avg_assists_before
+        description: "Average assists per game in the 5 games before the injury."
+      - name: avg_fg_pct_before
+        description: "Average field goal percentage in the 5 games before the injury."
+      - name: avg_minutes_before
+        description: "Average minutes per game in the 5 games before the injury."
+      - name: games_before_count
+        description: "Number of games included in the before window. Minimum 3 required to appear."
+      - name: avg_points_after
+        description: "Average points per game in the 5 games after returning from injury."
+      - name: avg_rebounds_after
+        description: "Average rebounds per game in the 5 games after returning."
+      - name: avg_assists_after
+        description: "Average assists per game in the 5 games after returning."
+      - name: avg_fg_pct_after
+        description: "Average field goal percentage in the 5 games after returning."
+      - name: avg_minutes_after
+        description: "Average minutes per game in the 5 games after returning."
+      - name: games_after_count
+        description: "Number of games included in the after window. Null if player hasn't returned yet."
+      - name: points_delta
+        description: "Points per game change after returning. Negative = scoring declined post-injury."
+      - name: rebounds_delta
+        description: "Rebounds per game change after returning."
+      - name: assists_delta
+        description: "Assists per game change after returning."
+
+  - name: mart_monthly_player_averages
+    description: >
+      Monthly performance averages per player. One row per player per team per calendar month.
+      Minimum 3 games in a month required to appear. Contains Evidence-specific month sorting
+      logic (season_month_label uses numeric prefix e.g. '1-Oct', '2-Nov') as a workaround
+      for Evidence's inability to sort categorical x-axes by custom order.
+      NOTE: This model overlaps significantly with mart_season_game_trends and may be consolidated
+      in a future cleanup. Prefer mart_season_game_trends for new analysis unless you need the
+      Evidence-specific month label columns.
+      Source: fct_player_game_logs.
+    columns:
+      - name: player_name
+        description: "Player full name."
+      - name: team
+        description: "Team abbreviation."
+      - name: month_name
+        description: "Short month name (e.g. 'Oct', 'Nov'). No year — not unique across seasons."
+      - name: calendar_month_num
+        description: "Calendar month number (1=Jan, 10=Oct). Use season_month_order for NBA season sorting."
+      - name: season_month_order
+        description: "NBA season month order. Oct=1, Nov=2, Dec=3, Jan=4, Feb=5, Mar=6, Apr=7. Use for chronological sorting."
+      - name: season_month_label
+        description: "Prefixed month label for Evidence chart sorting (e.g. '1-Oct', '2-Nov'). Workaround for Evidence categorical axis limitation."
+      - name: games
+        description: "Games played in the month. Minimum 3 required to appear."
+      - name: avg_minutes
+        description: "Average minutes per game in the month."
+      - name: avg_points
+        description: "Average points per game in the month."
+      - name: avg_assists
+        description: "Average assists per game in the month."
+      - name: avg_rebounds
+        description: "Average rebounds per game in the month."
+      - name: avg_steals
+        description: "Average steals per game in the month."
+      - name: avg_blocks
+        description: "Average blocks per game in the month."
+      - name: avg_dawg_index
+        description: "Average game-level dawg index in the month. Formula: avg(off_rebounds + steals + blocks)."
+      - name: avg_fg_pct
+        description: "Average field goal percentage in the month."
+      - name: avg_three_pct
+        description: "Average three-point percentage in the month."
+      - name: avg_plus_minus
+        description: "Average plus/minus per game in the month."
+      - name: avg_turnovers
+        description: "Average turnovers per game in the month."

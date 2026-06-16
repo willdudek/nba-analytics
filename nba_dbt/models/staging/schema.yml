@@ -14,6 +14,10 @@ sources:
         description: >
           Raw game-level player stats loaded from the NBA Stats API via pull_game_logs.py.
           One row per player per game. Covers seasons 2022-23 through 2025-26.
+        loaded_at_field: "GAME_DATE::timestamp"
+        freshness:
+          warn_after: {count: 30, period: day}
+          error_after: {count: 90, period: day}
       - name: nba_injuries
         description: >
           Raw NBA injury data pulled from official NBA injury reports via the nbainjuries
@@ -21,6 +25,10 @@ sources:
           where the player has a reported injury status. Covers seasons 2022-23 through
           2025-26. Status values: Out, Questionable, Available. Run pull_injuries.py once
           to load — this is a one-time pull, not a recurring job.
+        loaded_at_field: "strptime(game_date, '%m/%d/%Y')::timestamp"
+        freshness:
+          warn_after: {count: 30, period: day}
+          error_after: {count: 90, period: day}
 
 
 
@@ -165,3 +173,41 @@ models:
         description: "Boolean flag. True if player recorded 10+ in two of: points, rebounds, assists."
       - name: triple_double
         description: "Boolean flag. True if player recorded 10+ in three of: points, rebounds, assists."
+
+  - name: stg_nba_injuries
+    description: >
+      Cleaned and deduplicated NBA injury data from official NBA injury reports.
+      One row per player per game date per season. Player names normalized to
+      First Last format. Duplicate reports per game date deduplicated by keeping
+      worst status. Use for injury analysis, team injury profiles, and pre/post
+      injury performance comparisons.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: game_date
+        description: "Date of the game for which the injury status was reported."
+        data_type: date
+        constraints:
+          - type: not_null
+      - name: team
+        description: "Full team name as reported in the official NBA injury report."
+        data_type: varchar
+        constraints:
+          - type: not_null
+      - name: player_name
+        description: "Player full name normalized to First Last format."
+        data_type: varchar
+        constraints:
+          - type: not_null
+      - name: season
+        description: "NBA season in YYYY-YY format."
+        data_type: varchar
+        constraints:
+          - type: not_null
+      - name: status
+        description: "Player injury status. Values: Out, Doubtful, Questionable, Probable, Available."
+        data_type: varchar
+      - name: injury_reason
+        description: "Injury description as reported by the team. Format: Injury/Illness - Body Part; Specific Injury."
+        data_type: varchar
